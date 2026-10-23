@@ -1,0 +1,12 @@
+---
+# Сначала проверка конфигурации: при ошибке nginx не перезапускается
+- name: Validate Nginx config
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  listen: Restart Nginx
+
+- name: Restart Nginx service
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+  listen: Restart Nginx

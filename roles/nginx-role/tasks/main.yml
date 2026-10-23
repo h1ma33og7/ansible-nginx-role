@@ -1,0 +1,60 @@
+---
+- name: Check nginx_port
+  ansible.builtin.assert:
+    that:
+      - nginx_port | int >= 1
+      - nginx_port | int <= 65535
+    fail_msg: "nginx_port должен быть в диапазоне 1-65535, задан: {{ nginx_port }}"
+  tags: [nginx, config]
+
+- name: Install Nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: "{{ nginx_version }}"
+    update_cache: true
+    cache_valid_time: 3600
+  tags: [nginx, install]
+
+- name: Create site directory
+  ansible.builtin.file:
+    path: "/var/www/{{ site_dir }}"
+    state: directory
+    mode: "0755"
+  tags: [nginx, content]
+
+- name: Deploy Nginx config
+  ansible.builtin.template:
+    src: nginx-site.conf.j2
+    dest: "/etc/nginx/sites-available/{{ site_dir }}.conf"
+    mode: "0644"
+  notify: Restart Nginx
+  tags: [nginx, config]
+
+- name: Enable site
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{ site_dir }}.conf"
+    dest: "/etc/nginx/sites-enabled/{{ site_dir }}.conf"
+    state: link
+  notify: Restart Nginx
+  tags: [nginx, config]
+
+- name: Disable default site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Restart Nginx
+  tags: [nginx, config]
+
+- name: Deploy index.html
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: "/var/www/{{ site_dir }}/index.html"
+    mode: "0644"
+  tags: [nginx, content]
+
+- name: Start and enable Nginx
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
+  tags: [nginx, service]

@@ -1,0 +1,5 @@
+---
+nginx_port: 80
+site_name: "My Cool Website"
+# Имя каталога и конфига без пробелов
+site_dir: "{{ site_name | lower | replace(' ', '-') }}"
